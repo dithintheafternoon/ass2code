@@ -12,11 +12,47 @@ def average_title_embedding(train_df: pd.DataFrame):
     av: pd.Series = train_df["title_embedding"].apply(parse_average)
     train_df["average_title_embedding"] = av  
 
+knn_train = pd.read_csv("C:/Users/dengs/OneDrive/Documents/1ML/A2/project_data/project_data/train_dataset.csv")
+
+#======================================================================
+
+column_types = knn_train.dtypes
+
+i:int = 0
+remove:List[str] = []
+string_feature:List[str] = []
+for column in knn_train:
+    if column_types[column] == "object":
+        print(f"{column} is string")
+        remove.append(column)
+        if(column != "title_embedding"):
+            string_feature.append(column)
+        continue
+    else:
+        corr = knn_train[column].corr(knn_train["imdb_score_binned"])
+        print(f"    {column} has corr: {corr}")
+        if abs(corr) < 0.3:
+            remove.append(column)
+    i+=1
+
+#===============================================================================
+average_title_embedding(knn_train)
+for column in string_feature:
+    knn_train = knn_train.drop(column, axis=1)
+
+knn_train = knn_train.drop("title_embedding", axis=1);
+knn_train = knn_train.drop("id", axis=1)
+
+for col in remove:
+    if (col != 'id') and (col not in string_feature) and (col != 'title_embedding'):
+        knn_train = knn_train.drop(col, axis=1)
 
 knn_X = knn_train.drop("imdb_score_binned", axis='columns')
 knn_y = knn_train["imdb_score_binned"]
 
+
 knn_X = pd.DataFrame(normalize(knn_X,norm="l1", axis=1), columns=knn_X.columns, index=knn_X.index)
+
 
 
 #=============================================================================
@@ -68,7 +104,7 @@ for n in range(1,200):
         max_n = n
 
 print(y_accuracy)
-print(f"max accuracy: {max_accuracy} for n: {n}")
+print(f"max accuracy: {max_accuracy} for n: {max_n}")
 
 #=====================================================================
 # PLOT, show for specific neighbour number n
